@@ -34,6 +34,20 @@ export function Method() {
         </div>
       </header>
 
+      <figure className="plate-art">
+        <div className="plate-art-frame">
+          <img src={`${import.meta.env.BASE_URL}img/flemming-1882-mitosis.jpg`} alt="Walther Flemming's 1882 drawings of dividing cells: chromosomes condensing, lining up on the metaphase plate, separating, and the cell pinching in two." width={306} height={434} loading="lazy" />
+        </div>
+        <figcaption>
+          <span className="label">Fig. 0 · the reference plate</span>
+          <p>
+            Walther Flemming, <i>Zellsubstanz, Kern und Zelltheilung</i> (Leipzig, 1882), the book that named <i>mitosis</i>. Figures 42–43 show chromosomes lined up on the metaphase plate, and Fig. 48 shows a cell pinching into two.
+            This site borrows its grammar from these pages: tumours lined up on one plate, a dividing line, two daughter groups. Here the plate is printed in hematoxylin tones, or as a fluorescence negative in dark mode.
+          </p>
+          <p className="muted">Public domain, via Wikimedia Commons.</p>
+        </figcaption>
+      </figure>
+
       <section className="source" aria-labelledby="source-title">
         <h2 id="source-title" className="display section-title">
           The material
@@ -125,8 +139,8 @@ export function Method() {
         title="Principal components of the 5,000 most variable probes"
         caption={
           <>
-            The first two principal components explain {pct(s.pca.var1)} and {pct(s.pca.var2)} of the variation. The groups lean apart along PC1 but overlap heavily: one continuous spread, not two clusters. That matches the
-            line-up in Fig. 1.
+            The first two principal components explain {pct(s.pca.var1)} and {pct(s.pca.var2)} of the variation. PC1, the largest source of variation, mostly separates the subtypes. Only {s.pca.overlap} tumours sit in the zone
+            where the two groups overlap, and there is no empty gap between them. PC2 does not separate them at all. This matches the line-up in Fig. 1: one axis, with the labels changing along it.
           </>
         }
       >
@@ -140,10 +154,11 @@ export function Method() {
         </h2>
         <ol className="limit-list">
           <li>
-            <b>59 tumours against about 20,000 probes.</b> Every score here is an estimate from one small cohort, not evidence of a clinical test.
+            <b>59 tumours against {c.probesAfterVariance.toLocaleString()} probes.</b> Every score here is an estimate from one small cohort, not evidence of a clinical test.
           </li>
           <li>
-            <b>The labels are expression-derived.</b> We measure how well we can reproduce a definition, not an independent biological fact.
+            <b>The labels are built from what we measure.</b> Luminal B is defined by high proliferation (and, in the clinic, often by HER2 status too). We measure how well we can reproduce a definition, not an independent
+            biological fact. GEO does not record which definition the submitters used. Our HER2 finding suggests it included HER2 status, but that is an exploratory inference.
           </li>
           <li>
             <b>One French cohort, listed as Caucasian.</b> Breast cancer in African women tends to appear younger and with a larger triple-negative share. These findings should not be assumed to transfer to Kenyan patients without

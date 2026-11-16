@@ -62,7 +62,7 @@ export function Header() {
               </button>
             ))}
           </div>
-          <button type="button" className="guide-key" onClick={openHelp} data-tour="guide-key" aria-keyshortcuts="?">
+          <button type="button" className="guide-key" onClick={openHelp} data-tour="guide-key" aria-keyshortcuts="?" aria-label="Guide: tour, glossary and help">
             <span>Guide</span>
             <kbd>?</kbd>
           </button>

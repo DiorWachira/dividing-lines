@@ -46,6 +46,8 @@ export function Tumour() {
           <p className="page-dek">
             Proliferation score <b className="mono">{fmt(s.prolif)}</b>, which ranks {k + 1} of 59 from slowest to fastest. At the best line it falls on the <b>{subtypeName(side)}</b> side
             {side === s.subtype ? ', matching its label.' : ', the opposite side from its label. This is one of the tumours that makes the line fuzzy.'}
+            {' '}Its HER2-amplicon score is <b className="mono">{fmt(s.her2)}</b>
+            {s.her2 >= d.summary.her2.bestCut ? ', above the second dividing line (HER2-high).' : ', below the second dividing line.'}
             {s.flagged && ' Quality control flagged this sample as unusual; see the Method plate.'}
           </p>
         </div>

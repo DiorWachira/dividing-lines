@@ -10,6 +10,7 @@ export function Classifier() {
   const c = d.classifier
   const [sel, setSel] = useState('prolif')
   const [metric, setMetric] = useState<'auc' | 'acc'>('auc')
+  const [zoom, setZoom] = useState(true)
   const model = c.models.find((m) => m.key === sel) ?? c.models[0]
 
   return (
@@ -20,7 +21,7 @@ export function Classifier() {
           The actual <em>split</em>
         </h1>
         <p className="page-dek">
-          We have 59 tumours and nearly 20,000 probes, so it is very easy to fool yourself. Every gene choice, every scaling step and every tuning knob is fitted inside the training folds only ({c.outer}; inner loop: {c.inner}).
+          We have 59 tumours and {d.summary.de.tested.toLocaleString()} probes, so it is very easy to fool yourself. Every gene choice, every scaling step and every tuning knob is fitted inside the training folds only ({c.outer}; inner loop: {c.inner}).
           Each model below was tested on tumours it had never seen.
         </p>
       </header>
@@ -40,13 +41,13 @@ export function Classifier() {
         <div className="cv-row cv-inner">
           <span className="label">Inner loop</span>
           <div className="cv-folds">
-            {Array.from({ length: 3 }, (_, i) => (
+            {Array.from({ length: 4 }, (_, i) => (
               <span key={i} className={`cv-fold is-small ${i === 0 ? 'is-val' : ''}`}>
                 {i === 0 ? 'check' : 'fit'}
               </span>
             ))}
           </div>
-          <span className="muted cv-note">inside the 4 training folds only: picks how many genes and how much regularisation ({c.grid})</span>
+          <span className="muted cv-note">inside the outer training folds only: picks how many genes and how much regularisation ({c.grid})</span>
         </div>
       </section>
 
@@ -60,6 +61,10 @@ export function Classifier() {
             Accuracy
           </button>
         </div>
+        <label className="check">
+          <input type="checkbox" checked={zoom} onChange={(e) => setZoom(e.target.checked)} />
+          <span>zoom to 0.80–1.00</span>
+        </label>
         <span className="muted toolbar-note">Click a rung to inspect it</span>
       </div>
 
@@ -69,17 +74,20 @@ export function Classifier() {
         caption={
           <>
             One chromosome per model. The centromere pinch is the mean over {c.models[0]?.folds.length} outer test folds, the body spans the middle 95% of them, and every dark band is one fold. The 0.5 line is a coin flip. The
-            proliferation-only rung is drawn in the proliferation stain. {c.verdict}
+            proliferation-only rung is drawn in the proliferation stain, and dashed outlines (*) are exploratory rungs added after the HER2 finding. {c.verdict}
           </>
         }
       >
-        <Ideogram models={c.models} metric={metric} selected={sel} onSelect={setSel} />
+        <Ideogram models={c.models} metric={metric} selected={sel} onSelect={setSel} zoom={zoom} />
       </Figure>
 
       <section className="model-panel" aria-live="polite">
         <header className="model-head">
           <p className="label">Selected rung</p>
-          <h2 className="display section-title">{model.label}</h2>
+          <h2 className="display section-title">
+            {model.label.replace(' (exploratory)', '')}
+            {model.exploratory && <span className="tag-explore">exploratory: added after seeing Stage 6</span>}
+          </h2>
           <p className="model-q">{model.question}</p>
           <p className="muted">Features: {model.features}</p>
         </header>

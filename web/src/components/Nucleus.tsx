@@ -42,7 +42,8 @@ export function chromatin(seed: string, r: number, count = 5): { x: number; y: n
 
 /** Stain level 0..1 → a fill mixed between unstained and the signal chromogen. */
 export function stainFill(level: number): string {
-  const pctStain = Math.round(12 + Math.max(0, Math.min(1, level)) * 88)
+  // gamma > 1 keeps slow tumours nearly unstained, as on a real Ki-67 slide
+  const pctStain = Math.round(3 + Math.max(0, Math.min(1, level)) ** 1.35 * 95)
   return `color-mix(in oklab, var(--signal) ${pctStain}%, var(--unstained))`
 }
 

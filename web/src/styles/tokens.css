@@ -1,0 +1,173 @@
+/*
+  THE PLATE · design tokens
+  ---------------------------------------------------------------
+  Concept: a histology slide read at the metaphase plate.
+  Light mode = BRIGHTFIELD (an IHC slide: hematoxylin, eosin, DAB).
+  Dark mode  = FLUORESCENCE (the same section imaged with a DAPI-style
+               nuclear stain and Ki-67 shown in a yellow pseudo-colour).
+
+  Colour has meaning, never decoration:
+    --lumA    hematoxylin indigo  → Luminal A tumours
+    --lumB    eosin rose          → Luminal B tumours
+    --signal  DAB brown / Ki-67 yellow → proliferation (cell division) and
+              the dividing line itself. Nothing else uses it.
+  The three-slot palette passes the dataviz validator in both modes
+  (all-pairs CVD ΔE ≥ 9.9 light / 11.1 dark; normal-vision ≥ 21).
+*/
+
+:root {
+  /* type */
+  --font-display: 'Bodoni Moda Variable', 'Bodoni 72', 'Didot', Georgia, serif;
+  --font-sans: 'Schibsted Grotesk Variable', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Martian Mono Variable', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  /* scale */
+  --step--2: 0.6875rem;
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.1875rem;
+  --step-2: 1.5rem;
+  --step-3: clamp(1.75rem, 1.3rem + 1.6vw, 2.4rem);
+  --step-4: clamp(2.2rem, 1.4rem + 3.2vw, 3.8rem);
+  --step-5: clamp(2.6rem, 1.2rem + 5vw, 5.4rem);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 72px;
+
+  --radius: 2px;
+  --radius-pill: 999px;
+  --header-h: 64px;
+  --page-max: 1220px;
+  --gutter: clamp(16px, 3vw, 32px);
+
+  --ease-stain: cubic-bezier(0.22, 0.7, 0.18, 1);
+  --ease-furrow: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* ---------- BRIGHTFIELD (light) ---------- */
+  --glass: #f6f2ee;          /* page ground: a lightly eosin-washed slide */
+  --glass-2: #efe8e3;        /* recessed wells */
+  --slide: #fbf9f7;          /* raised surfaces: the coverslip */
+  --frost: #e7e2dc;          /* frosted label end of a slide */
+  --ink: #1f1c3d;            /* hematoxylin, deepest */
+  --ink-2: #45425f;
+  --ink-3: #635f7a;          /* muted text, ≥ 4.5:1 on --glass */
+  --rule: #ddd3cd;
+  --rule-strong: #b6aaa4;
+  --on-ink: #fbf9f7;
+
+  --lumA: #4549a6;
+  --lumB: #d04a86;
+  --signal: #7e4310;          /* DAB chromogen */
+  --signal-ink: #6b380c;      /* text-safe signal */
+  --signal-wash: #ecdccd;
+  --lumA-wash: #e3e3f3;
+  --lumB-wash: #f6e0ea;
+  --eosin-wash: #f3e1e4;
+
+  --unstained: #e9e1dc;       /* nucleus with no DAB uptake */
+  --hema-nucleus: #8d8fc6;    /* counterstained nucleus */
+
+  /* diverging (row z-score): steel ↔ neutral ↔ sienna */
+  --div-lo: #2f6f8f;
+  --div-mid: #e3ddd8;
+  --div-hi: #a0522d;
+
+  --status-ok: #2f6b45;
+  --status-warn: #8a5a00;
+  --status-bad: #a3302a;
+
+  --veil: rgba(31, 28, 61, 0.62);
+  --tissue-cell: rgba(208, 74, 134, 0.10);
+  --tissue-nuc: rgba(69, 73, 166, 0.10);
+  --tissue-dab: rgba(126, 67, 16, 0.13);
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --glass: #0e1018;
+    --glass-2: #0a0c13;
+    --slide: #161a28;
+    --frost: #1d2233;
+    --ink: #e6e7f5;
+    --ink-2: #c0c2db;
+    --ink-3: #9a9db8;
+    --rule: #262a3d;
+    --rule-strong: #3b4060;
+    --on-ink: #0e1018;
+
+    --lumA: #7479e0;
+    --lumB: #da5a88;
+    --signal: #a88e1a;
+    --signal-ink: #d6bd4a;
+    --signal-wash: #2a2614;
+    --lumA-wash: #1c1f3c;
+    --lumB-wash: #33182a;
+    --eosin-wash: #161a28;
+
+    --unstained: #22263a;
+    --hema-nucleus: #3d4396;
+
+    --div-lo: #4f9cc0;
+    --div-mid: #262a3d;
+    --div-hi: #d07a4c;
+
+    --status-ok: #6cc08a;
+    --status-warn: #e0b04a;
+    --status-bad: #ef7d76;
+
+    --veil: rgba(5, 6, 12, 0.74);
+    --tissue-cell: rgba(116, 121, 224, 0.07);
+    --tissue-nuc: rgba(116, 121, 224, 0.16);
+    --tissue-dab: rgba(214, 189, 74, 0.16);
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --glass: #0e1018;
+  --glass-2: #0a0c13;
+  --slide: #161a28;
+  --frost: #1d2233;
+  --ink: #e6e7f5;
+  --ink-2: #c0c2db;
+  --ink-3: #9a9db8;
+  --rule: #262a3d;
+  --rule-strong: #3b4060;
+  --on-ink: #0e1018;
+
+  --lumA: #7479e0;
+  --lumB: #da5a88;
+  --signal: #a88e1a;
+  --signal-ink: #d6bd4a;
+  --signal-wash: #2a2614;
+  --lumA-wash: #1c1f3c;
+  --lumB-wash: #33182a;
+  --eosin-wash: #161a28;
+
+  --unstained: #22263a;
+  --hema-nucleus: #3d4396;
+
+  --div-lo: #4f9cc0;
+  --div-mid: #262a3d;
+  --div-hi: #d07a4c;
+
+  --status-ok: #6cc08a;
+  --status-warn: #e0b04a;
+  --status-bad: #ef7d76;
+
+  --veil: rgba(5, 6, 12, 0.74);
+  --tissue-cell: rgba(116, 121, 224, 0.07);
+  --tissue-nuc: rgba(116, 121, 224, 0.16);
+  --tissue-dab: rgba(214, 189, 74, 0.16);
+
+  color-scheme: dark;
+}

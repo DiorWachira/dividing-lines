@@ -39,7 +39,7 @@ The title has two meanings. **Cell division** turns out to be most of the biolog
 
 | Path | What it is |
 |---|---|
-| [`dividing_lines.ipynb`](dividing_lines.ipynb) | **The main deliverable.** Eight stages, each opened and closed in plain language, saved with outputs. It runs top to bottom on CPU in about 4 minutes on a laptop (Colab's 2 vCPUs will take somewhat longer; the cross-validation grid was kept small for that). |
+| [`dividing_lines.ipynb`](dividing_lines.ipynb) | **The main deliverable.** The eight stages the brief asks for, each kept short (one-sentence explanations, then the code and figures), saved with outputs. It runs top to bottom on CPU in about 4 minutes on a laptop; Colab's 2 vCPUs will take somewhat longer. |
 | [`figures/`](figures) | Every figure the notebook draws, saved as PNG |
 | [`results/`](results) | The top 2,000 differentially expressed probes as CSV |
 | [`requirements.txt`](requirements.txt) | Python packages (Colab already has all but `gseapy`, which the notebook installs) |
@@ -53,7 +53,7 @@ The title has two meanings. **Cell division** turns out to be most of the biolog
   python -m venv .venv && .venv/bin/pip install -r requirements.txt
   jupyter nbconvert --to notebook --execute --inplace dividing_lines.ipynb
   ```
-  When it runs inside this repository, the last cell also refreshes `web/public/data/*.json` for the site.
+  The site's data files in `web/public/data/` were exported by the earlier, longer version of the notebook (commit `a7d0e42`), which also ran a proliferation-adjusted regression and a co-expression network.
 * **Companion site:** `cd web && npm ci && npm run dev`. Tests: `npx playwright test` (desktop and mobile).
 
 ## Method in brief
@@ -61,8 +61,8 @@ The title has two meanings. **Cell division** turns out to be most of the biolog
 2. **QC.** The values are GC-RMA log₂ (max 17, median 6.6), so we did **not** log again. The submitters had already removed noise-level probes, so 29,873 of the chip's 54,675 remain. There were no missing values. We dropped 1,281 near-flat probes (SD < 0.2) and flagged no outliers. The subtypes are balanced across batches (χ² p = 0.74).
 3. **EDA.** Boxplots, PCA, a heatmap and the *MKI67* check: 6.4× higher in Luminal B, p ≈ 5×10⁻¹⁴.
 4. **Differential expression.** Welch's t-test per probe, Benjamini–Hochberg FDR, and Mann–Whitney as a check. **8,269 probes pass FDR 5%** (about 1,430 would pass p < 0.05 by chance alone). Gene symbols come from the GPL570 annotation, with an 89.9% match rate.
-5. **Interpretation.** Offline GO enrichment and an online Hallmark cross-check (Enrichr). We measure the proliferation share with the declared PAM50 set. A regression adjusted for proliferation leaves 64 probes, led by the HER2 amplicon. We also build a co-expression network.
-6. **Machine learning.** Gene selection, scaling and tuning all sit inside a scikit-learn `Pipeline` within **nested** stratified cross-validation, and masks are recomputed inside each training fold. We report AUC, accuracy and per-class error as mean ± SD across folds, compare rungs with a Nadeau–Bengio corrected paired t-test, and run a label-permutation leakage check.
+5. **Interpretation.** We run offline GO enrichment and measure the proliferation share with the declared PAM50 set. The HER2-amplicon finding is labelled exploratory.
+6. **Machine learning.** Gene selection, scaling and tuning all sit inside a scikit-learn `Pipeline` within **nested** stratified cross-validation, and masks are recomputed inside each training fold. We report AUC, accuracy and per-class error as mean ± SD across folds, compare rungs with a Nadeau–Bengio corrected paired t-test, and run a label-shuffle leakage check (three shuffles, mean AUC ≈ 0.5).
 
 ## Limitations
 * 59 tumours against 28,592 probes: every score is an estimate from one small cohort.

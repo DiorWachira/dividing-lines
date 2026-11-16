@@ -34,14 +34,15 @@ export const STEPS: Step[] = [
     route: '/',
     target: 'cut-handle',
     title: 'Drag the dividing line',
-    body: 'This is the line a pathologist effectively draws. Drag it, or focus it and use the arrow keys. The page stays live under this card, so try it now.',
+    body: 'This is the line a pathologist effectively draws on a Ki-67 scale. Drag it, or focus it and use the arrow keys, and watch the counts underneath. The costly mistake is a Luminal B tumour called Luminal A, because that can mean chemotherapy is not offered. The page stays live under this card.',
   },
   {
-    id: 'readout',
+    id: 'two-lines',
     route: '/',
-    target: 'readout',
-    title: 'Count the mistakes, not just the hits',
-    body: 'Errors on each side are counted separately. The costly one is a Luminal B tumour called Luminal A, because that can mean chemotherapy is not offered when it was needed.',
+    target: 'two-lines',
+    title: 'A second dividing line',
+    body: (d) =>
+      `We did not expect this one. Five genes that sit together on chromosome 17 (the HER2 amplicon) separate the subtypes almost as well as division speed. Of the ${d.summary.her2.slowLumB} Luminal B tumours that divide slowly, ${d.summary.her2.slowLumBHer2High} are HER2-high. Because we found it after looking at the results, we label it exploratory.`,
   },
   {
     id: 'volcano',
@@ -89,7 +90,7 @@ export const STEPS: Step[] = [
       const p = d.classifier.models.find((m) => m.key === 'prolif')
       const f = d.classifier.models.find((m) => m.key === 'full')
       return p && f
-        ? `Cell-division genes alone score AUC ${p.auc.mean.toFixed(2)}, against ${f.auc.mean.toFixed(2)} for all genes. If the two are close, the subtypes differ mainly in how fast they divide, which is exactly how they were first defined.`
+        ? `Cell-division genes alone score AUC ${p.auc.mean.toFixed(2)}, against ${f.auc.mean.toFixed(2)} for every probe, so division speed carries almost all of it. Now look lower down: removing proliferation barely hurts, because the HER2 amplicon takes over. Only the rung with both removed drops.`
         : 'Compare the proliferation-only rung with the full model.'
     },
   },

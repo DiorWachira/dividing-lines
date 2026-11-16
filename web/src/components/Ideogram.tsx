@@ -19,9 +19,10 @@ interface Props {
   selected?: string
   onSelect?: (key: string) => void
   compact?: boolean
+  zoom?: boolean
 }
 
-export function Ideogram({ models, metric = 'auc', selected, onSelect, compact = false }: Props) {
+export function Ideogram({ models, metric = 'auc', selected, onSelect, compact = false, zoom = false }: Props) {
   const [ref, width] = useWidth<HTMLDivElement>(800)
   const [hover, setHover] = useState<{ key: string; i: number } | null>(null)
   const narrow = width < 600
@@ -29,8 +30,10 @@ export function Ideogram({ models, metric = 'auc', selected, onSelect, compact =
   const rowH = compact ? 34 : narrow ? 64 : 52
   const m = { top: 8, right: 56, bottom: 34, left: labelW + 8 }
   const height = m.top + rowH * models.length + m.bottom
-  const x = scaleLinear().domain([0.3, 1]).range([m.left, width - m.right])
-  const ticks = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+  const lo0 = zoom ? 0.8 : 0.3
+  const xs = scaleLinear().domain([lo0, 1]).range([m.left, width - m.right])
+  const x = (v: number) => xs(Math.max(lo0, Math.min(1, v)))
+  const ticks = zoom ? [0.8, 0.85, 0.9, 0.95, 1] : [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
   const body = compact ? 9 : 12
 
   return (
@@ -40,13 +43,20 @@ export function Ideogram({ models, metric = 'auc', selected, onSelect, compact =
           <g key={t} transform={`translate(${x(t)} 0)`} aria-hidden="true">
             <line y1={m.top} y2={height - m.bottom} className={t === 0.5 ? 'ideo-chance' : 'ideo-grid'} />
             <text y={height - m.bottom + 18} textAnchor="middle" className="ideo-tick">
-              {t.toFixed(1)}
+              {zoom ? t.toFixed(2) : t.toFixed(1)}
             </text>
           </g>
         ))}
-        <text x={x(0.5)} y={height - 4} textAnchor="middle" className="ideo-tick ideo-chance-label" aria-hidden="true">
-          coin flip
-        </text>
+        {!zoom && (
+          <text x={x(0.5)} y={height - 4} textAnchor="middle" className="ideo-tick ideo-chance-label" aria-hidden="true">
+            coin flip
+          </text>
+        )}
+        {zoom && (
+          <text x={m.left} y={height - 4} className="ideo-tick ideo-chance-label" aria-hidden="true">
+            zoomed: 0.80–1.00 (scores below are drawn at the left edge)
+          </text>
+        )}
         <text x={width - m.right} y={height - 4} textAnchor="end" className="ideo-tick" aria-hidden="true">
           {metric === 'auc' ? 'ROC-AUC →' : 'accuracy →'}
         </text>
@@ -54,8 +64,9 @@ export function Ideogram({ models, metric = 'auc', selected, onSelect, compact =
         {models.map((mod, row) => {
           const st = mod[metric]
           const cy = m.top + row * rowH + (narrow && !compact ? rowH * 0.62 : rowH / 2)
-          const lo = x(Math.max(0.3, st.lo))
-          const hi = x(Math.min(1, st.hi))
+          const offScale = zoom && st.mean < lo0
+          const lo = x(st.lo)
+          const hi = x(st.hi)
           const mid = x(st.mean)
           const isProlif = mod.key === 'prolif'
           const isSel = selected === mod.key
@@ -79,7 +90,7 @@ export function Ideogram({ models, metric = 'auc', selected, onSelect, compact =
           return (
             <g
               key={mod.key}
-              className={`ideo-row ${isProlif ? 'is-prolif' : ''} ${isSel ? 'is-selected' : ''} ${onSelect ? 'is-clickable' : ''}`}
+              className={`ideo-row ${mod.exploratory ? 'is-exploratory' : ''} ${isProlif ? 'is-prolif' : ''} ${isSel ? 'is-selected' : ''} ${onSelect ? 'is-clickable' : ''}`}
               onClick={() => onSelect?.(mod.key)}
               onKeyDown={(e) => {
                 if (onSelect && (e.key === 'Enter' || e.key === ' ')) {
@@ -98,11 +109,13 @@ export function Ideogram({ models, metric = 'auc', selected, onSelect, compact =
               {narrow || labelW === 0 ? (
                 <text x={4} y={m.top + row * rowH + 16} className="ideo-label">
                   {mod.short}
+                  {mod.exploratory ? ' *' : ''}
                 </text>
               ) : (
                 <>
                   <text x={4} y={cy - (compact ? -4 : 2)} className="ideo-label">
                     {mod.short}
+                    {mod.exploratory ? ' *' : ''}
                   </text>
                   {!compact && (
                     <text x={4} y={cy + 14} className="ideo-sub">
@@ -145,7 +158,7 @@ export function Ideogram({ models, metric = 'auc', selected, onSelect, compact =
                   />
                 ))}
               <text x={Math.min(hi + 8, width - m.right + 6)} y={cy + 4} className="ideo-value">
-                {fmt(st.mean)}
+                {offScale ? `◂ ${fmt(st.mean)} (off scale)` : fmt(st.mean)}
               </text>
             </g>
           )

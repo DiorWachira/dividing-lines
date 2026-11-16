@@ -17,6 +17,7 @@ import { chromatin, nucleusPath, stainFill } from './Nucleus'
 interface Props {
   samples: Sample[]
   bestCut: number
+  her2Cut?: number
   compact?: boolean
   highlight?: string
   interactive?: boolean
@@ -34,10 +35,13 @@ interface Placed {
   rank: number
 }
 
-export function cutStats(samples: Sample[], t: number) {
+export type Axis = 'prolif' | 'her2'
+const valueOf = (s: Sample, axis: Axis) => (axis === 'her2' ? s.her2 : s.prolif)
+
+export function cutStats(samples: Sample[], t: number, axis: Axis = 'prolif') {
   let aLeft = 0, aRight = 0, bLeft = 0, bRight = 0
   for (const s of samples) {
-    const right = s.prolif >= t
+    const right = valueOf(s, axis) >= t
     if (s.subtype === 'LumA') right ? aRight++ : aLeft++
     else right ? bRight++ : bLeft++
   }
@@ -51,40 +55,45 @@ export function cutStats(samples: Sample[], t: number) {
   }
 }
 
-export function LineUp({ samples, bestCut, compact = false, highlight, interactive = true, onCutChange }: Props) {
+export function LineUp({ samples, bestCut, her2Cut, compact = false, highlight, interactive = true, onCutChange }: Props) {
   const [wrapRef, width] = useWidth<HTMLDivElement>(900)
   const navigate = useNavigate()
+  const [axis, setAxis] = useState<Axis>('prolif')
+  const best = axis === 'her2' && her2Cut != null ? her2Cut : bestCut
   const [cut, setCutState] = useState(bestCut)
+  const val = useCallback((s: Sample) => valueOf(s, axis), [axis])
+  const pExt = useMemo(() => [Math.min(...samples.map((s) => s.prolif)), Math.max(...samples.map((s) => s.prolif))] as const, [samples])
   const [hover, setHover] = useState<string | null>(null)
   const [cursor, setCursor] = useState(-1)
   const dragging = useRef(false)
   const svgRef = useRef<SVGSVGElement>(null)
 
   const narrow = width < 560
-  const r = compact ? (narrow ? 5 : 6.5) : narrow ? 7.5 : 11
-  const laneH = compact ? 2 * r * 3.2 : narrow ? 2 * r * 4.6 : 2 * r * 4.2
-  const m = { top: compact ? 14 : 40, right: 14, bottom: compact ? 26 : 52, left: 14 }
-  const height = m.top + laneH * 2 + 18 + m.bottom
+  const r = compact ? (narrow ? 4.5 : 6.5) : narrow ? 5.5 : 11
+  const laneH = compact ? 2 * r * 3.6 : narrow ? 2 * r * 7 : 2 * r * 4.2
+  const m = { top: compact ? 14 : 44, right: 14, bottom: compact ? 26 : 52, left: 14 }
+  const gap = compact ? 10 : 22
+  const height = m.top + laneH * 2 + gap + m.bottom
 
   const ext = useMemo(() => {
-    const xs = samples.map((s) => s.prolif)
+    const xs = samples.map(val)
     return [Math.min(...xs), Math.max(...xs)] as const
-  }, [samples])
+  }, [samples, val])
   const x = useMemo(
     () => scaleLinear().domain([ext[0] - 0.12, ext[1] + 0.12]).range([m.left, width - m.right]).nice(),
     [ext, width, m.left, m.right],
   )
-  const laneY = { LumA: m.top + laneH / 2, LumB: m.top + laneH + 18 + laneH / 2 }
+  const laneY = { LumA: m.top + laneH / 2, LumB: m.top + laneH + gap + laneH / 2 }
 
   // Beeswarm within each lane: nudge nuclei vertically until they do not collide.
   const placed = useMemo<Placed[]>(() => {
     const out: Placed[] = []
-    const order = [...samples].sort((a, b) => a.prolif - b.prolif)
+    const order = [...samples].sort((a, b) => val(a) - val(b))
     const rankOf = new Map(order.map((s, i) => [s.id, i]))
     for (const lane of ['LumA', 'LumB'] as const) {
       const here: { x: number; y: number }[] = []
       for (const s of order.filter((o) => o.subtype === lane)) {
-        const px = x(s.prolif)
+        const px = x(val(s))
         let py = laneY[lane]
         for (let k = 0; k < 40; k++) {
           const off = Math.ceil(k / 2) * (r * 1.05) * (k % 2 ? -1 : 1)
@@ -100,16 +109,16 @@ export function LineUp({ samples, bestCut, compact = false, highlight, interacti
           s, x: px, y: py, r,
           d: nucleusPath(s.id, r),
           dots: compact ? [] : chromatin(s.id, r, 4),
-          stain: (s.prolif - ext[0]) / (ext[1] - ext[0] || 1),
+          stain: (s.prolif - pExt[0]) / (pExt[1] - pExt[0] || 1),
           rank: rankOf.get(s.id) ?? 0,
         })
       }
     }
     return out
-  }, [samples, x, laneY.LumA, laneY.LumB, r, laneH, compact, ext])
+  }, [samples, x, laneY.LumA, laneY.LumB, r, laneH, compact, pExt, val])
 
   const sorted = useMemo(() => [...placed].sort((a, b) => a.rank - b.rank), [placed])
-  const stats = cutStats(samples, cut)
+  const stats = cutStats(samples, cut, axis)
   const cx = x(cut)
 
   const setCut = useCallback(
@@ -133,7 +142,7 @@ export function LineUp({ samples, bestCut, compact = false, highlight, interacti
     else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') setCut(cut + step)
     else if (e.key === 'Home') setCut(x.domain()[0])
     else if (e.key === 'End') setCut(x.domain()[1])
-    else if (e.key === 'Enter' || e.key.toLowerCase() === 'b') setCut(bestCut)
+    else if (e.key === 'Enter' || e.key.toLowerCase() === 'b') setCut(best)
     else return
     e.preventDefault()
     e.stopPropagation()
@@ -154,6 +163,35 @@ export function LineUp({ samples, bestCut, compact = false, highlight, interacti
 
   return (
     <div className={`lineup ${compact ? 'is-compact' : ''}`} ref={wrapRef} data-tour="lineup">
+      {!compact && interactive && her2Cut != null && (
+        <div className="lineup-axis-switch" data-tour="axis-switch">
+          <span className="label">Line them up by</span>
+          <div className="seg" role="radiogroup" aria-label="Line-up axis">
+            {(
+              [
+                ['prolif', 'Proliferation (declared)'],
+                ['her2', 'HER2 amplicon (exploratory)'],
+              ] as const
+            ).map(([k, label]) => (
+              <button
+                key={k}
+                type="button"
+                role="radio"
+                aria-checked={axis === k}
+                className={`seg-btn ${axis === k ? 'is-on' : ''}`}
+                onClick={() => {
+                  setAxis(k)
+                  const nb = k === 'her2' ? her2Cut : bestCut
+                  setCutState(nb)
+                  onCutChange?.(nb)
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <svg
         ref={svgRef}
         width={width}
@@ -163,15 +201,15 @@ export function LineUp({ samples, bestCut, compact = false, highlight, interacti
         onPointerUp={() => (dragging.current = false)}
         onPointerLeave={() => setHover(null)}
         role="group"
-        aria-label={`Line-up of ${samples.length} tumours by proliferation score`}
+        aria-label={`Line-up of ${samples.length} tumours by ${axis === 'her2' ? 'HER2-amplicon' : 'proliferation'} score`}
       >
         {/* side labels */}
         {!compact && (
           <g className="lineup-sides" aria-hidden="true">
-            <text x={Math.max(cx - 10, m.left + 2)} y={16} textAnchor="end" className="lineup-side">
+            <text x={Math.max(cx - 10, m.left + 2)} y={14} textAnchor="end" className="lineup-side">
               ← called Luminal A
             </text>
-            <text x={Math.min(cx + 10, width - m.right - 2)} y={16} textAnchor="start" className="lineup-side">
+            <text x={Math.min(cx + 10, width - m.right - 2)} y={14} textAnchor="start" className="lineup-side">
               called Luminal B →
             </text>
           </g>
@@ -188,7 +226,7 @@ export function LineUp({ samples, bestCut, compact = false, highlight, interacti
               className={`lineup-lane lane-${lane}`}
             />
             {!compact && (
-              <text x={m.left + 8} y={laneY[lane] - laneH / 2 + 14} className="lineup-lane-label">
+              <text x={m.left + 2} y={laneY[lane] - laneH / 2 - 6} className="lineup-lane-label">
                 {subtypeName(lane).toUpperCase()} · {samples.filter((s) => s.subtype === lane).length}
               </text>
             )}
@@ -207,9 +245,19 @@ export function LineUp({ samples, bestCut, compact = false, highlight, interacti
             </g>
           ))}
           {!compact && (
-            <text x={(m.left + width - m.right) / 2} y={40} textAnchor="middle" className="lineup-axis-title">
-              {narrow ? '← slower · proliferation score · faster →' : '← slower division      proliferation score (mean z of 21 PAM50 cell-division genes)      faster division →'}
-            </text>
+            <>
+              <text x={m.left} y={40} className="lineup-axis-title">
+                ← {axis === 'her2' ? 'lower' : 'slower division'}
+              </text>
+              {!narrow && (
+                <text x={(m.left + width - m.right) / 2} y={40} textAnchor="middle" className="lineup-axis-title">
+                  {axis === 'her2' ? 'HER2-amplicon score (5 genes on 17q12) · fill still shows division speed' : 'proliferation score (mean z of 21 PAM50 cell-division genes)'}
+                </text>
+              )}
+              <text x={width - m.right} y={40} textAnchor="end" className="lineup-axis-title">
+                {axis === 'her2' ? 'higher' : 'faster division'} →
+              </text>
+            </>
           )}
         </g>
 
@@ -224,7 +272,7 @@ export function LineUp({ samples, bestCut, compact = false, highlight, interacti
           data-tour="nuclei"
         >
           {placed.map((p) => {
-            const wrong = (p.s.subtype === 'LumA') !== p.s.prolif < cut
+            const wrong = (p.s.subtype === 'LumA') !== val(p.s) < cut
             const isActive = p.s.id === activeId
             return (
               <g
@@ -272,7 +320,7 @@ export function LineUp({ samples, bestCut, compact = false, highlight, interacti
                 transform={`translate(0 ${compact ? 6 : 26})`}
                 tabIndex={0}
                 role="slider"
-                aria-label="Dividing line position on the proliferation score"
+                aria-label={`Dividing line position on the ${axis === 'her2' ? 'HER2-amplicon' : 'proliferation'} score`}
                 aria-valuemin={Number(x.domain()[0].toFixed(2))}
                 aria-valuemax={Number(x.domain()[1].toFixed(2))}
                 aria-valuenow={Number(cut.toFixed(2))}
@@ -317,9 +365,12 @@ export function LineUp({ samples, bestCut, compact = false, highlight, interacti
             Proliferation score <b className="mono">{fmt(active.s.prolif)}</b>
           </span>
           <span>
-            <i className="gene">MKI67</i> <b className="mono">{fmt(active.s.mki67)}</b> log₂
+            HER2-amplicon score <b className="mono">{fmt(active.s.her2)}</b>
           </span>
-          <span className="muted">{(active.s.subtype === 'LumA') !== active.s.prolif < cut ? 'On the other side of the line' : 'On its labelled side'} · click to open</span>
+          <span>
+            <i className="gene">MKI67</i> <b className="mono">{fmt(active.s.mki67)}</b> · <i className="gene">ERBB2</i> <b className="mono">{fmt(active.s.erbb2)}</b> log₂
+          </span>
+          <span className="muted">{(active.s.subtype === 'LumA') !== val(active.s) < cut ? 'On the other side of the line' : 'On its labelled side'} · click to open</span>
         </div>
       )}
 
@@ -347,7 +398,7 @@ export function LineUp({ samples, bestCut, compact = false, highlight, interacti
             <span className="muted">{pct(stats.errB)} of Luminal B, the costly mistake</span>
           </div>
           <div className="readout-actions">
-            <button type="button" className="btn btn-quiet" onClick={() => setCut(bestCut)} data-tour="snap">
+            <button type="button" className="btn btn-quiet" onClick={() => setCut(best)} data-tour="snap">
               Snap to best line
             </button>
           </div>

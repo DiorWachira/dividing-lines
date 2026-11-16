@@ -22,7 +22,7 @@ export function Figure({ n, title, caption, children, tour, id }: { n: string; t
   )
 }
 
-export function Legend({ items }: { items: { swatch: 'lumA' | 'lumB' | 'signal' | 'ink' | 'faint' | 'dash' | 'dot'; label: ReactNode }[] }) {
+export function Legend({ items }: { items: { swatch: 'lumA' | 'lumB' | 'signal' | 'ink' | 'faint' | 'dash' | 'dot' | 'ring'; label: ReactNode }[] }) {
   return (
     <ul className="legend" aria-label="Legend">
       {items.map((it, i) => (

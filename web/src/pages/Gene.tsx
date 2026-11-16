@@ -32,7 +32,7 @@ export function Gene() {
       <header className="gene-head">
         <div>
           <p className="label">
-            Probe {g.probe} · {g.chrom || 'chromosome n/a'}
+            Probe <span className="id">{g.probe}</span> · {g.chrom || 'chromosome n/a'}
           </p>
           <h1 className="display gene-title">
             <i>{g.symbol}</i>
@@ -41,7 +41,8 @@ export function Gene() {
           <div className="gene-badges">
             {g.pam50 && <span className="badge badge-signal">PAM50 proliferation set</span>}
             {g.cellCycle && <span className="badge badge-signal-soft">GO cell cycle / division</span>}
-            {!g.pam50 && !g.cellCycle && <span className="badge">not annotated as cell-cycle</span>}
+            {g.amplicon && <span className="badge badge-ink">17q12 HER2 amplicon</span>}
+            {!g.pam50 && !g.cellCycle && !g.amplicon && <span className="badge">not annotated as cell-cycle</span>}
           </div>
         </div>
         <dl className="gene-stats">
@@ -74,8 +75,8 @@ export function Gene() {
           tour="mirror"
           caption={
             <>
-              Each dot is one tumour; the horizontal rules are the group means ({fmt(g.meanA)} vs {fmt(g.meanB)} on the log₂ scale). A gap of 1 log₂ unit means twice as much message. Overlapping clouds mean the gene could not
-              classify a single tumour on its own, even when the average difference is real.
+              Each dot is one tumour; the horizontal rules are the group means ({fmt(g.meanA)} vs {fmt(g.meanB)} on the log₂ scale). A gap of 1 log₂ unit means twice as much message. Wherever the two clouds overlap, this gene on its own
+              cannot tell those tumours apart, even when the average difference is real.
             </>
           }
         >

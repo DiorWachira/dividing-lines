@@ -16,14 +16,15 @@ import { fmt, foldWords } from '../lib/util'
 interface Props {
   data: VolcanoData
   genes: GeneRow[]
-  mode: 'pam50' | 'cellcycle'
+  mode: 'pam50' | 'cellcycle' | 'amplicon'
+  amplicon?: string[]
 }
 
 function cssVar(name: string) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 }
 
-export function Volcano({ data, genes, mode }: Props) {
+export function Volcano({ data, genes, mode, amplicon = [] }: Props) {
   const [wrapRef, width] = useWidth<HTMLDivElement>(900)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const navigate = useNavigate()
@@ -36,7 +37,12 @@ export function Volcano({ data, genes, mode }: Props) {
   const yMax = useMemo(() => Math.max(...data.y) * 1.06, [data.y])
   const x = useMemo(() => scaleLinear().domain([-xMax, xMax]).range([m.left, width - m.right]).nice(), [xMax, width, m.left, m.right])
   const y = useMemo(() => scaleLinear().domain([0, yMax]).range([height - m.bottom, m.top]).nice(), [yMax, height, m.top, m.bottom])
-  const highlight = mode === 'pam50' ? data.pam50 : data.cc
+  const highlight = useMemo(() => {
+    if (mode === 'pam50') return data.pam50
+    if (mode === 'cellcycle') return data.cc
+    const set = new Set(amplicon)
+    return data.sym.map((s) => (set.has(s) ? 1 : 0))
+  }, [mode, data, amplicon])
 
   const delaunay = useMemo(() => Delaunay.from(data.x.map((_, i) => [x(data.x[i]), y(data.y[i])] as [number, number])), [data, x, y])
   const byProbe = useMemo(() => new Map(genes.map((g) => [g.probe, g])), [genes])
@@ -89,8 +95,15 @@ export function Volcano({ data, genes, mode }: Props) {
     for (let i = 0; i < data.x.length; i++) {
       if (!highlight[i]) continue
       ctx.beginPath()
-      ctx.arc(x(data.x[i]), y(data.y[i]), mode === 'pam50' ? 4.5 : 3, 0, Math.PI * 2)
-      ctx.fillStyle = signal
+      ctx.arc(x(data.x[i]), y(data.y[i]), mode === 'cellcycle' ? 3 : 4.5, 0, Math.PI * 2)
+      ctx.fillStyle = mode === 'amplicon' ? surface : signal
+      if (mode === 'amplicon') {
+        ctx.fill()
+        ctx.strokeStyle = ink
+        ctx.lineWidth = 2
+        ctx.stroke()
+        continue
+      }
       ctx.strokeStyle = surface
       ctx.lineWidth = 1.5
       ctx.fill()
@@ -177,7 +190,7 @@ export function Volcano({ data, genes, mode }: Props) {
           <span className="mono">
             log₂FC {fmt(data.x[h.i])} · −log₁₀p {fmt(data.y[h.i], 1)}
           </span>
-          {highlight[h.i] ? <span className="tip-signal">{mode === 'pam50' ? 'PAM50 proliferation gene' : 'GO cell cycle / division gene'}</span> : null}
+          {highlight[h.i] ? <span className={mode === 'amplicon' ? '' : 'tip-signal'}>{mode === 'pam50' ? 'PAM50 proliferation gene' : mode === 'cellcycle' ? 'GO cell cycle / division gene' : '17q12 HER2-amplicon gene'}</span> : null}
           {hoverGene ? <span className="muted">click to open the gene</span> : <span className="muted">outside the top-ranked genes</span>}
         </div>
       )}

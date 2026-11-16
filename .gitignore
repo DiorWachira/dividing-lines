@@ -1,0 +1,19 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+# Downloaded data (the notebook fetches it; never commit it)
+data/
+*.gz
+# Node / web
+node_modules/
+web/dist/
+web/test-results/
+web/playwright-report/
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.qodo/

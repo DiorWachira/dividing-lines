@@ -1,0 +1,14 @@
+# Everything the notebook needs. Google Colab already ships all of these except gseapy,
+# which the notebook installs itself (it is only used for an optional online cross-check).
+numpy>=1.26
+pandas>=2.1
+scipy>=1.11
+scikit-learn>=1.4
+matplotlib>=3.8
+seaborn>=0.13
+statsmodels>=0.14
+networkx>=3.2
+gseapy>=1.1
+# Only for running the notebook locally from the command line:
+jupyter>=1.0
+nbconvert>=7.0

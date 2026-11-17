@@ -41,7 +41,7 @@ The title has two meanings. **Cell division** turns out to be most of the biolog
 |---|---|
 | [`dividing_lines.ipynb`](dividing_lines.ipynb) | **The main deliverable.** The eight stages the brief asks for, each kept short (one-sentence explanations, then the code and figures), saved with outputs. It runs top to bottom on CPU in about 4 minutes on a laptop; Colab's 2 vCPUs will take somewhat longer. |
 | [`figures/`](figures) | Every figure the notebook draws, saved as PNG |
-| [`results/`](results) | The top 2,000 differentially expressed probes as CSV |
+| [`results/`](results) | The top 2,000 differentially expressed probes as CSV, plus `GSE45827_luminal_59_tumours.csv`: the cleaned expression matrix for our 59 tumours (28,592 probes, gene names, and subtype and batch rows), for opening in Excel |
 | [`requirements.txt`](requirements.txt) | Python packages (Colab already has all but `gseapy`, which the notebook installs) |
 | [`web/`](web) | The interactive companion site (Vite + React + TypeScript), built from the notebook's exported numbers |
 | [`docs/screenshots/`](docs/screenshots) | Screenshots of the site in light, dark and mobile |
@@ -119,7 +119,7 @@ The site is designed from the project's own domain, not from a template. **The P
 </p>
 
 ## Data, citations and licence
-* **Data:** GEO [GSE45827](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE45827) (Institut Curie, platform GPL570); linked paper Gruosso *et al.*, *EMBO Mol Med* 2016 ([PMID 27006338](https://pubmed.ncbi.nlm.nih.gov/27006338)). NCBI places no restrictions on GEO data; the submitters may hold rights. We cite them and do not redistribute the data.
+* **Data:** GEO [GSE45827](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE45827) (Institut Curie, platform GPL570); linked paper Gruosso *et al.*, *EMBO Mol Med* 2016 ([PMID 27006338](https://pubmed.ncbi.nlm.nih.gov/27006338)). NCBI places no restrictions on GEO data; the submitters may hold rights. We cite them, and redistribute only the cleaned 59-tumour subset in `results/` for convenience; the notebook still downloads the original files from NCBI.
 * **Gene annotation:** GEO `GPL570.annot.gz`.
 * **Other sources cited in the notebook:** Bourgon *et al.* 2010 (independent filtering); Nadeau & Bengio 2003 (corrected resampled t-test); Kenyan breast-cancer series ([Western Kenya, Notre Dame](https://curate.nd.edu/articles/journal_contribution/Aggressive_breast_cancer_in_western_Kenya_has_early_onset_high_proliferation_and_immune_cell_infiltration_/24728970/1), [PMC5792313](https://pmc.ncbi.nlm.nih.gov/articles/PMC5792313)); subtype discordance ([PMC6538748](https://pmc.ncbi.nlm.nih.gov/articles/PMC6538748), [Breast Cancer Res bcr1517](https://breast-cancer-research.biomedcentral.com/track/pdf/10.1186/bcr1517)).
 * **Code:** MIT licence (see `LICENSE`).
